@@ -1,0 +1,162 @@
+[
+    {
+        "fecha_hora": "2026-06-25 21:24:38",
+        "cripto": "BTC",
+        "precio_usd": 58268.88
+    },
+    {
+        "fecha_hora": "2026-06-25 21:24:39",
+        "cripto": "ETH",
+        "precio_usd": 1521.175
+    },
+    {
+        "fecha_hora": "2026-06-25 21:24:40",
+        "cripto": "SOL",
+        "precio_usd": 65.895
+    },
+    {
+        "fecha_hora": "2026-06-25 21:24:41",
+        "cripto": "ADA",
+        "precio_usd": 0.13895
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:33",
+        "cripto": "BTC",
+        "precio_usd": 58570.875
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:34",
+        "cripto": "ETH",
+        "precio_usd": 1528.87
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:35",
+        "cripto": "SOL",
+        "precio_usd": 66.2
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:36",
+        "cripto": "ADA",
+        "precio_usd": 0.13995
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:39",
+        "cripto": "BTC",
+        "precio_usd": 58559.225
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:39",
+        "cripto": "ETH",
+        "precio_usd": 1528.835
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:40",
+        "cripto": "SOL",
+        "precio_usd": 66.2
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:41",
+        "cripto": "ADA",
+        "precio_usd": 0.13985
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:44",
+        "cripto": "BTC",
+        "precio_usd": 58559.225
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:44",
+        "cripto": "ETH",
+        "precio_usd": 1528.835
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:45",
+        "cripto": "SOL",
+        "precio_usd": 66.2
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:47",
+        "cripto": "ADA",
+        "precio_usd": 0.13985
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:49",
+        "cripto": "BTC",
+        "precio_usd": 58549.185
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:50",
+        "cripto": "ETH",
+        "precio_usd": 1528.355
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:51",
+        "cripto": "SOL",
+        "precio_usd": 66.2
+    },
+    {
+        "fecha_hora": "2026-06-25 21:26:52",
+        "cripto": "ADA",
+        "precio_usd": 0.13985
+    },
+    {
+        "fecha_hora": "2026-06-25 21:27:46",
+        "cripto": "BTC",
+        "precio_usd": 58604.865
+    },
+    {
+        "fecha_hora": "2026-06-25 21:27:47",
+        "cripto": "ETH",
+        "precio_usd": 1530.835
+    },
+    {
+        "fecha_hora": "2026-06-25 21:27:48",
+        "cripto": "SOL",
+        "precio_usd": 66.305
+    },
+    {
+        "fecha_hora": "2026-06-25 21:27:49",
+        "cripto": "ADA",
+        "precio_usd": 0.14015
+    },
+    {
+        "fecha_hora": "2026-06-25 21:29:10",
+        "cripto": "BTC",
+        "precio_usd": 58710.265
+    },
+    {
+        "fecha_hora": "2026-06-25 21:29:11",
+        "cripto": "ETH",
+        "precio_usd": 1533.735
+    },
+    {
+        "fecha_hora": "2026-06-25 21:29:12",
+        "cripto": "SOL",
+        "precio_usd": 66.485
+    },
+    {
+        "fecha_hora": "2026-06-25 21:29:14",
+        "cripto": "ADA",
+        "precio_usd": 0.14035
+    },
+    {
+        "fecha_hora": "2026-06-25 21:32:33",
+        "cripto": "BTC",
+        "precio_usd": 58755.41
+    },
+    {
+        "fecha_hora": "2026-06-25 21:32:34",
+        "cripto": "ETH",
+        "precio_usd": 1533.645
+    },
+    {
+        "fecha_hora": "2026-06-25 21:32:35",
+        "cripto": "SOL",
+        "precio_usd": 66.46
+    },
+    {
+        "fecha_hora": "2026-06-25 21:32:36",
+        "cripto": "ADA",
+        "precio_usd": 0.14035
+    }
+]
