@@ -1,1 +1,10 @@
-venv
+# Entorno virtual local
+.venv/
+venv/
+
+# Archivo de variables de entorno (Claves de API)
+.env
+
+# Caché de Python
+__pycache__/
+*.pyc
