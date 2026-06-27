@@ -8,3 +8,6 @@ venv/
 # Caché de Python
 __pycache__/
 *.pyc
+
+chroma_db/
+reporte_financiero.pdf
