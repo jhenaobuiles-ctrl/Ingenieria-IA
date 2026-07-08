@@ -9,10 +9,16 @@ from dotenv import load_dotenv
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+if not GEMINI_API_KEY:
+    try:
+        GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
+
 if GEMINI_API_KEY:
     client = genai.Client(api_key=GEMINI_API_KEY)
 else:
-    st.error("No se encontró 'GEMINI_API_KEY' en el archivo .env")
+    st.error("No se encontró 'GEMINI_API_KEY'. Configúrala en tu archivo .env (local) o en los Secrets de Streamlit (nube).")
     st.stop()
 
 # 2. Configuración de la Interfaz
