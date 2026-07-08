@@ -1,14 +1,19 @@
-import streamlit as st
-import pypdf
 import os
+import socket
+import streamlit as st
+from pypdf import PdfReader
+
+# 1. PARCHE DE RED: Forzar IPv4 seguro (evita caídas getaddrinfo en entornos Windows)
+_orig_getaddrinfo = socket.getaddrinfo
+socket.getaddrinfo = lambda *args, **kwargs: _orig_getaddrinfo(*args, **kwargs)[:1]
+
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-# 1. Carga automática de la configuración (.env)
+# 2. CARGA HÍBRIDA DE API KEY (Busca en .env local o en Secrets de Streamlit Cloud)
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 if not GEMINI_API_KEY:
     try:
         GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
@@ -21,75 +26,109 @@ else:
     st.error("No se encontró 'GEMINI_API_KEY'. Configúrala en tu archivo .env (local) o en los Secrets de Streamlit (nube).")
     st.stop()
 
-# 2. Configuración de la Interfaz
-st.set_page_config(page_title="RAG Financial Dashboard", page_icon="📊", layout="wide")
-st.title("📊 Dashboard Financiero - Motor RAG Oficial")
+# 3. MOTOR RAG OPTIMIZADO (Chunking inteligente por estructuras de párrafo y solapamiento)
+def generar_respuesta_rag_inteligente(pregunta, texto_completo, chunk_size=2000, overlap=400):
+    bloques = texto_completo.split("\n\n")
+    chunks = []
+    chunk_actual = ""
+    
+    for b in bloques:
+        if len(chunk_actual) + len(b) < chunk_size:
+            chunk_actual += "\n\n" + b if chunk_actual else b
+        else:
+            if chunk_actual: 
+                chunks.append(chunk_actual)
+            chunk_actual = chunk_actual[-overlap:] + "\n\n" + b if overlap < len(chunk_actual) else b
+            
+    if chunk_actual: 
+        chunks.append(chunk_actual)
 
+    # Buscador de fragmentos relevantes por coincidencia de palabras clave
+    palabras_clave = [w.lower() for w in pregunta.split() if len(w) > 4]
+    chunk_seleccionado = chunks[0] if chunks else ""
+    max_coincidencias = 0
+    
+    for c in chunks:
+        coincidencias = sum(1 for kw in palabras_clave if kw in c.lower())
+        if coincidencias > max_coincidencias:
+            max_coincidencias = coincidencias
+            chunk_seleccionado = c
+
+    prompt_rag = (
+        "Eres un analista financiero experto. Responde la pregunta con máxima precisión utilizando únicamente el contexto provisto.\n"
+        "Interpreta las tablas o cifras con rigurosidad matemática. Si la información no está explícita o se ve incompleta, "
+        "di textualmente: 'No encontré esa información'.\n\n"
+        f"CONTEXTO EXTRAÍDO DEL DOCUMENTO:\n{chunk_seleccionado}\n\n"
+        f"PREGUNTA DEL USUARIO:\n{pregunta}"
+    )
+    
+    try:
+        res = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=prompt_rag, 
+            config=types.GenerateContentConfig(temperature=0.0)
+        )
+        return res.text.strip()
+    except Exception as e:
+        return f"⚠️ Error al consultar el modelo: {str(e)}"
+
+
+# 4. CONFIGURACIÓN Y MAQUETACIÓN DE LA INTERFAZ DE STREAMLIT
+st.set_page_config(page_title="Analista RAG Financiero", page_icon="💼", layout="wide")
+st.title("💼 Analista RAG Financiero Inteligente")
+
+# Barra Lateral: Cargador de Reportes PDF
+with st.sidebar:
+    st.header("Configuración")
+    archivo_cargado = st.file_uploader("Sube tu reporte financiero (PDF)", type=["pdf"])
+    
+    if archivo_cargado is not None:
+        if "texto_contexto" not in st.session_state or st.session_state.get("nombre_archivo") != archivo_cargado.name:
+            with st.spinner("Procesando y segmentando PDF estructuralmente..."):
+                try:
+                    reader = PdfReader(archivo_cargado)
+                    texto_completo = ""
+                    for pagina in reader.pages:
+                        texto_extraido = pagina.extract_text()
+                        if texto_extraido:
+                            texto_completo += texto_extraido + "\n"
+                    
+                    # Almacenamiento persistente en la sesión web
+                    st.session_state["texto_contexto"] = texto_completo
+                    st.session_state["nombre_archivo"] = archivo_cargado.name
+                    st.success(f"✅ Documento cargado: {len(reader.pages)} páginas procesadas.")
+                except Exception as e:
+                    st.error(f"❌ Error al procesar el archivo: {str(e)}")
+    else:
+        # Limpieza automática si el usuario remueve el archivo
+        if "texto_contexto" in st.session_state:
+            del st.session_state["texto_contexto"]
+            del st.session_state["nombre_archivo"]
+            if "messages" in st.session_state:
+                del st.session_state["messages"]
+
+# 5. CONTROL DEL FLUJO DEL CHAT COMPATIBLE CON EL CONTEXTO
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "texto_pdf" not in st.session_state:
-    st.session_state.texto_pdf = ""
 
-# 3. Extracción de texto
-def extraer_texto_pdf(uploaded_file):
-    pdf_reader = pypdf.PdfReader(uploaded_file)
-    return "".join([page.extract_text() or "" for page in pdf_reader.pages])
-
-# 4. Barra Lateral
-with st.sidebar:
-    st.header("Documentos de Entrada")
-    uploaded_file = st.file_uploader("Carga un PDF financiero", type=["pdf"])
-    
-    if uploaded_file and not st.session_state.texto_pdf:
-        with st.spinner("Procesando documento..."):
-            st.session_state.texto_pdf = extraer_texto_pdf(uploaded_file)
-            st.success("¡PDF indexado correctamente!")
-
-# 5. Renderizado del Historial
+# Renderizar el historial de conversación en la pantalla
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Flujo de Consulta
-if prompt := st.chat_input("Haz una pregunta sobre el reporte..."):
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
-
-    with st.chat_message("assistant"):
-        if st.session_state.texto_pdf:
-            with st.spinner("Gemini está analizando..."):
-                try:
-                    prompt_sistema = (
-                        "Eres un consultor financiero experto. Responde a la última pregunta usando "
-                        "únicamente el contexto provisto abajo. Si la respuesta no está allí, di: "
-                        "'No encontré esa información en el documento.'\n\n"
-                        f"--- CONTEXTO DEL PDF ---\n{st.session_state.texto_pdf}\n------------------------"
-                    )
-                    
-                    # Estructura de historial compatible con el nuevo SDK
-                    contenido_historial = []
-                    for msg in st.session_state.messages:
-                        role = "user" if msg["role"] == "user" else "model"
-                        contenido_historial.append({
-                            "role": role, 
-                            "parts": [{"text": msg["content"]}]
-                        })
-                    
-                    # Consumir el nuevo cliente oficial
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=contenido_historial,
-                        config=types.GenerateContentConfig(
-                            system_instruction=prompt_sistema,
-                            temperature=0.0
-                        )
-                    )
-                    
-                    st.markdown(response.text)
-                    st.session_state.messages.append({"role": "assistant", "content": response.text})
-                    
-                except Exception as e:
-                    st.error(f"Error en la API: {e}")
-        else:
-            st.warning("Por favor, carga un PDF en la barra lateral para activar el contexto.")
+# Evaluar si el contexto del PDF ya está disponible para habilitar la interacción
+if "texto_contexto" in st.session_state:
+    if prompt := st.chat_input("¿Qué cifra o análisis cualitativo deseas consultar?"):
+        # Mostrar y guardar el mensaje del usuario
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Generar respuesta del RAG en tiempo real
+        with st.chat_message("assistant"):
+            with st.spinner("Buscando en bloques financieros..."):
+                respuesta_rag = generar_respuesta_rag_inteligente(prompt, st.session_state["texto_contexto"])
+                st.markdown(respuesta_rag)
+        st.session_state.messages.append({"role": "assistant", "content": respuesta_rag})
+else:
+    st.info("👋 Para activar el chat del analista, por favor arrastra o selecciona un archivo PDF en la barra lateral.")
