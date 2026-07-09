@@ -28,6 +28,7 @@ else:
 
 # 3. MOTOR RAG OPTIMIZADO (Chunking inteligente por estructuras de párrafo y solapamiento)
 def generar_respuesta_rag_inteligente(pregunta, texto_completo, chunk_size=2000, overlap=400):
+    # 1. Segmentación del texto por párrafos lógicos
     bloques = texto_completo.split("\n\n")
     chunks = []
     chunk_actual = ""
@@ -36,30 +37,43 @@ def generar_respuesta_rag_inteligente(pregunta, texto_completo, chunk_size=2000,
         if len(chunk_actual) + len(b) < chunk_size:
             chunk_actual += "\n\n" + b if chunk_actual else b
         else:
-            if chunk_actual: 
-                chunks.append(chunk_actual)
+            if chunk_actual: chunks.append(chunk_actual)
             chunk_actual = chunk_actual[-overlap:] + "\n\n" + b if overlap < len(chunk_actual) else b
-            
-    if chunk_actual: 
-        chunks.append(chunk_actual)
+    if chunk_actual: chunks.append(chunk_actual)
 
-    # Buscador de fragmentos relevantes por coincidencia de palabras clave
-    palabras_clave = [w.lower() for w in pregunta.split() if len(w) > 4]
+    # 2. QUERY EXPANSION: Traducción + Sinónimos Conceptuales para el PDF
+    keywords_ingles = []
+    prompt_expansion = (
+        f"Analyze this Spanish query: '{pregunta}'. Extract 8 English keywords, including direct translations, "
+        "synonyms, and broad conceptual terms (e.g., if the query asks for 'riesgos', include terms like "
+        "'uncertainty', 'challenges', 'policy', 'outlook', 'factors'). "
+        "Return only the keywords separated by commas, nothing else."
+    )
+    
+    try:
+        res_kw = client.models.generate_content(model='gemini-2.5-flash', contents=prompt_expansion)
+        keywords_ingles = [k.strip().lower() for k in res_kw.text.split(",") if len(k.strip()) > 3]
+    except Exception:
+        pass # Si falla la expansión, el RAG continuará con las palabras en español
+
+    # Combinación de palabras clave (Español + Inglés)
+    palabras_clave = [w.lower() for w in pregunta.split() if len(w) > 4] + keywords_ingles
+    
+    # 3. Buscador de fragmentos por coincidencia expandida
     chunk_seleccionado = chunks[0] if chunks else ""
     max_coincidencias = 0
-    
     for c in chunks:
         coincidencias = sum(1 for kw in palabras_clave if kw in c.lower())
         if coincidencias > max_coincidencias:
             max_coincidencias = coincidencias
             chunk_seleccionado = c
 
+    # 4. Prompt final en español para el Analista
     prompt_rag = (
-        "Eres un analista financiero experto. Responde la pregunta con máxima precisión utilizando únicamente el contexto provisto.\n"
-        "Interpreta las tablas o cifras con rigurosidad matemática. Si la información no está explícita o se ve incompleta, "
-        "di textualmente: 'No encontré esa información'.\n\n"
-        f"CONTEXTO EXTRAÍDO DEL DOCUMENTO:\n{chunk_seleccionado}\n\n"
-        f"PREGUNTA DEL USUARIO:\n{pregunta}"
+        "Eres un analista financiero experto. Responde la pregunta en ESPAÑOL utilizando el contexto provisto.\n"
+        "Interpreta las tablas o cifras con rigurosidad. Si la información no está o está incompleta, "
+        "di estrictamente: 'No encontré esa información'.\n\n"
+        f"CONTEXTO:\n{chunk_seleccionado}\n\nPREGUNTA:\n{pregunta}"
     )
     
     try:
